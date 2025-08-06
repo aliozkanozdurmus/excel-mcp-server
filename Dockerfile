@@ -13,7 +13,7 @@ WORKDIR /app
 RUN pip install uv
 
 # Proje dosyalarını kopyala
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src/ ./src/
 
 # Excel dosyaları için dizin oluştur

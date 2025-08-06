@@ -30,5 +30,5 @@ RUN uv sync
 # Port'u expose et
 EXPOSE 8000
 
-# Server'ı başlat
-CMD ["uv", "run", "excel-mcp-server", "streamable-http"] 
+# Server'ı başlat (SSE transport ile)
+CMD ["uv", "run", "excel-mcp-server", "sse"] 

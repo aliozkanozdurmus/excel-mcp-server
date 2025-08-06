@@ -68,7 +68,8 @@ mcp = FastMCP(
     "excel-mcp",
     host=os.environ.get("FASTMCP_HOST", "0.0.0.0"),
     port=int(os.environ.get("FASTMCP_PORT", "8017")),
-    instructions="Excel MCP Server for manipulating Excel files"
+    instructions="Excel MCP Server for manipulating Excel files",
+    cors_origins=["*"]  # CORS ayarları ekle
 )
 
 def get_excel_path(filename: str) -> str:

@@ -12,6 +12,10 @@ WORKDIR /app
 # uv package manager'ı kur
 RUN pip install uv
 
+# Proje dosyalarını kopyala
+COPY pyproject.toml uv.lock ./
+COPY src/ ./src/
+
 # Excel dosyaları için dizin oluştur
 RUN mkdir -p /app/excel_files
 
@@ -20,8 +24,8 @@ ENV EXCEL_FILES_PATH=/app/excel_files
 ENV FASTMCP_PORT=8000
 ENV FASTMCP_HOST=0.0.0.0
 
-# Excel MCP Server'ı kur
-RUN uvx install excel-mcp-server
+# Dependencies'leri kur
+RUN uv sync
 
 # Port'u expose et
 EXPOSE 8000
@@ -31,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Server'ı başlat
-CMD ["uvx", "excel-mcp-server", "streamable-http"] 
+CMD ["uv", "run", "excel-mcp-server", "streamable-http"] 

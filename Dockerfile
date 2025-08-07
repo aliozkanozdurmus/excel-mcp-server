@@ -21,10 +21,10 @@ RUN uv sync --no-dev
 RUN mkdir -p /app/excel_files
 
 # Port aç
-EXPOSE 8000
+EXPOSE 8017
 
 # Environment variables
-ENV FASTMCP_PORT=8000
+ENV FASTMCP_PORT=8017
 ENV FASTMCP_HOST=0.0.0.0
 ENV EXCEL_FILES_PATH=/app/excel_files
 

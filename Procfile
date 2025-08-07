@@ -1,0 +1,1 @@
+web: FASTMCP_PORT=$PORT uv run excel-mcp-server streamable-http 

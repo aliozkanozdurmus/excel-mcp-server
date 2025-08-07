@@ -1,1 +1,1 @@
-web: FASTMCP_PORT=$PORT python -m excel_mcp.__main__ streamable-http 
+web: FASTMCP_PORT=8000 python -m excel_mcp.__main__ streamable-http 

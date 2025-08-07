@@ -1,6 +1,10 @@
 import logging
 import os
 from typing import Any, List, Dict, Optional
+import boto3
+from botocore.exceptions import ClientError
+from datetime import datetime
+import uuid
 
 from mcp.server.fastmcp import FastMCP
 
@@ -99,6 +103,59 @@ def get_excel_path(filename: str) -> str:
 
     # In SSE mode, if it's a relative path, resolve it based on EXCEL_FILES_PATH
     return os.path.join(EXCEL_FILES_PATH, filename)
+
+def create_unique_filename(original_filename: str) -> str:
+    """Create unique filename with timestamp and UUID."""
+    # Get file name and extension
+    name, ext = os.path.splitext(original_filename)
+    
+    # Create timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Create unique ID
+    unique_id = str(uuid.uuid4())[:8]
+    
+    # Combine: original_name_timestamp_uniqueid.ext
+    unique_filename = f"{name}_{timestamp}_{unique_id}{ext}"
+    
+    return unique_filename
+
+def upload_to_r2(file_path: str, filename: str) -> str:
+    """Upload Excel file to Cloudflare R2 storage."""
+    try:
+        # R2 credentials from environment variables
+        r2_endpoint = os.environ.get("R2_ENDPOINT")
+        r2_access_key = os.environ.get("R2_ACCESS_KEY")
+        r2_secret_key = os.environ.get("R2_SECRET_KEY")
+        r2_bucket = os.environ.get("R2_BUCKET")
+        
+        if not all([r2_endpoint, r2_access_key, r2_secret_key, r2_bucket]):
+            return "R2 credentials not configured"
+        
+        # Create unique filename for R2
+        unique_filename = create_unique_filename(filename)
+        
+        # Create S3 client for R2
+        s3_client = boto3.client(
+            's3',
+            endpoint_url=r2_endpoint,
+            aws_access_key_id=r2_access_key,
+            aws_secret_access_key=r2_secret_key
+        )
+        
+        # Upload file with unique name
+        s3_client.upload_file(file_path, r2_bucket, unique_filename)
+        
+        # Generate public URL
+        public_url = f"{r2_endpoint}/{r2_bucket}/{unique_filename}"
+        return public_url
+        
+    except ClientError as e:
+        logger.error(f"R2 upload error: {e}")
+        return f"Upload failed: {str(e)}"
+    except Exception as e:
+        logger.error(f"Unexpected error during R2 upload: {e}")
+        return f"Upload failed: {str(e)}"
 
 @mcp.tool()
 def apply_formula(
@@ -272,30 +329,44 @@ def write_data_to_excel(
 
 @mcp.tool()
 def create_workbook(filepath: str) -> str:
-    """Create new Excel workbook."""
+    """Create new Excel workbook and upload to R2 storage."""
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_workbook as create_workbook_impl
         create_workbook_impl(full_path)
         
-        # Add download link to response
-        host = os.environ.get("FASTMCP_HOST", "0.0.0.0")
-        port = os.environ.get("FASTMCP_PORT", "8017")
+        # Upload to R2
+        r2_url = upload_to_r2(full_path, filepath)
         
-        # Use environment variable for base URL if available
-        base_url_env = os.environ.get("BASE_URL")
-        if base_url_env:
-            base_url = f"{base_url_env}/download/{filepath}"
+        if r2_url.startswith("Upload failed"):
+            return f"Created workbook at {full_path}\n\nR2 upload failed: {r2_url}"
         else:
-            # Fallback to constructed URL
-            base_url = f"https://veniai-mcpexcel-odhswe-ff76bd-20-218-157-135.traefik.me/download/{filepath}"
-        
-        return f"Created workbook at {full_path}\n\nDownload link: {base_url}"
+            return f"Created workbook at {full_path}\n\nDownload link: {r2_url}"
     except WorkbookError as e:
         return f"Error: {str(e)}"
     except Exception as e:
         logger.error(f"Error creating workbook: {e}")
         raise
+
+@mcp.tool()
+def upload_excel_to_cloudflare(filepath: str) -> str:
+    """Upload existing Excel file to Cloudflare storage for download."""
+    try:
+        full_path = get_excel_path(filepath)
+        
+        if not os.path.exists(full_path):
+            return f"Error: File not found at {full_path}"
+        
+        # Upload to R2
+        r2_url = upload_to_r2(full_path, filepath)
+        
+        if r2_url.startswith("Upload failed"):
+            return f"Cloudflare upload failed: {r2_url}"
+        else:
+            return f"File uploaded to Cloudflare successfully!\nDownload link: {r2_url}"
+    except Exception as e:
+        logger.error(f"Error uploading file to Cloudflare: {e}")
+        return f"Error: {str(e)}"
 
 @mcp.tool()
 def create_worksheet(filepath: str, sheet_name: str) -> str:

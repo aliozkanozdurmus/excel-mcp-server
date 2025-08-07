@@ -69,7 +69,10 @@ mcp = FastMCP(
     host=os.environ.get("FASTMCP_HOST", "0.0.0.0"),
     port=int(os.environ.get("FASTMCP_PORT", "8017")),
     instructions="Excel MCP Server for manipulating Excel files",
-    cors_origins=["*"]  # CORS ayarları ekle
+    cors_origins=["*"],  # CORS ayarları ekle
+    cors_allow_credentials=True,
+    cors_allow_methods=["*"],
+    cors_allow_headers=["*"]
 )
 
 

@@ -1,1 +1,1 @@
-web: FASTMCP_PORT=$PORT uv run excel-mcp-server streamable-http 
+web: FASTMCP_PORT=$PORT python -m excel_mcp.__main__ streamable-http 

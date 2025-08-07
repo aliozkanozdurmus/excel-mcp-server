@@ -1,6 +1,0 @@
-name: excel-mcp-server
-type: docker
-port: 8017
-environment:
-  - EXCEL_FILES_PATH=/app/excel_files
-  - FASTMCP_PORT=8017 

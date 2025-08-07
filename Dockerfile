@@ -27,8 +27,9 @@ ENV FASTMCP_HOST=0.0.0.0
 # Dependencies'leri kur
 RUN uv sync
 
-# WebSocket library'si ekle
+# WebSocket library'si ekle (hem global hem virtual environment'a)
 RUN pip install websockets uvicorn[standard]
+RUN uv add websockets uvicorn[standard]
 
 # Port'u expose et
 EXPOSE 8000

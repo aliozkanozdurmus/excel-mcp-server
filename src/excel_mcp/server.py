@@ -332,12 +332,22 @@ def write_data_to_excel(
         raise
 
 @mcp.tool()
-def create_workbook(filepath: str) -> str:
+def create_workbook(filepath: str, sheet_name: str = "Veri") -> str:
     """Create new Excel workbook and upload to R2 storage."""
     try:
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_workbook as create_workbook_impl
         create_workbook_impl(full_path)
+        
+        # Delete default Sheet1 and create new sheet with proper name
+        try:
+            from excel_mcp.sheet import delete_sheet as delete_sheet_impl
+            delete_sheet_impl(full_path, "Sheet1")
+            
+            from excel_mcp.workbook import create_sheet as create_sheet_impl
+            create_sheet_impl(full_path, sheet_name)
+        except Exception as e:
+            logger.warning(f"Could not replace Sheet1: {e}")
         
         # Upload to R2
         r2_url = upload_to_r2(full_path, filepath)
@@ -371,6 +381,8 @@ def upload_excel_to_cloudflare(filepath: str) -> str:
     except Exception as e:
         logger.error(f"Error uploading file to Cloudflare: {e}")
         return f"Error: {str(e)}"
+
+
 
 @mcp.tool()
 def create_worksheet(filepath: str, sheet_name: str) -> str:

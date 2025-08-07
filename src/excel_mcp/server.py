@@ -72,6 +72,11 @@ mcp = FastMCP(
     cors_origins=["*"]  # CORS ayarları ekle
 )
 
+# Add health check endpoint
+@mcp.app.get("/health")
+async def health_check():
+    return {"status": "ok", "message": "Excel MCP Server is running"}
+
 def get_excel_path(filename: str) -> str:
     """Get full path to Excel file.
     

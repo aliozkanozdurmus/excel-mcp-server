@@ -2,7 +2,7 @@
 builder = "railpack"
 
 [deploy]
-start = "uv run excel-mcp-server streamable-http"
+start = "python -m excel_mcp streamable-http"
 healthcheck = "/mcp"
 
 [env]

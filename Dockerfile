@@ -27,6 +27,7 @@ EXPOSE 8017
 ENV FASTMCP_PORT=8017
 ENV FASTMCP_HOST=0.0.0.0
 ENV EXCEL_FILES_PATH=/app/excel_files
+ENV BASE_URL=https://excelmcp.veniai.com.tr
 
 
 # VSCode'da çalışan komutun aynısı

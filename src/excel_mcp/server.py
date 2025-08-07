@@ -316,7 +316,17 @@ def create_workbook(filepath: str) -> str:
         create_workbook_impl(full_path)
         
         # Add download link to response
-        base_url = f"https://veniai-mcpexcel-odhswe-ff76bd-20-218-157-135.traefik.me/download/{filepath}"
+        host = os.environ.get("FASTMCP_HOST", "0.0.0.0")
+        port = os.environ.get("FASTMCP_PORT", "8017")
+        
+        # Use environment variable for base URL if available
+        base_url_env = os.environ.get("BASE_URL")
+        if base_url_env:
+            base_url = f"{base_url_env}/download/{filepath}"
+        else:
+            # Fallback to constructed URL
+            base_url = f"https://veniai-mcpexcel-odhswe-ff76bd-20-218-157-135.traefik.me/download/{filepath}"
+        
         return f"Created workbook at {full_path}\n\nDownload link: {base_url}"
     except WorkbookError as e:
         return f"Error: {str(e)}"

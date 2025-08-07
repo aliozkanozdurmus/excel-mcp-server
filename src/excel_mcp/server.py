@@ -135,6 +135,9 @@ def upload_to_r2(file_path: str, filename: str) -> str:
         # Create unique filename for R2
         unique_filename = create_unique_filename(filename)
         
+        # Create R2 path with excel_files folder
+        r2_path = f"excel_files/{unique_filename}"
+        
         # Create S3 client for R2
         s3_client = boto3.client(
             's3',
@@ -143,11 +146,11 @@ def upload_to_r2(file_path: str, filename: str) -> str:
             aws_secret_access_key=r2_secret_key
         )
         
-        # Upload file with unique name
-        s3_client.upload_file(file_path, r2_bucket, unique_filename)
+        # Upload file with folder structure
+        s3_client.upload_file(file_path, r2_bucket, r2_path)
         
-        # Generate public URL
-        public_url = f"{r2_endpoint}/{r2_bucket}/{unique_filename}"
+        # Generate public URL with folder structure
+        public_url = f"{r2_endpoint}/{r2_bucket}/{r2_path}"
         return public_url
         
     except ClientError as e:

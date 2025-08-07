@@ -1,8 +1,6 @@
 import logging
 import os
 from typing import Any, List, Dict, Optional
-from fastapi import HTTPException
-from fastapi.responses import FileResponse
 
 from mcp.server.fastmcp import FastMCP
 
@@ -77,42 +75,7 @@ mcp = FastMCP(
     cors_allow_headers=["*"]
 )
 
-# Add download endpoint
-@mcp.app.get("/download/{filename}")
-async def download_file(filename: str):
-    """Download Excel file from server."""
-    try:
-        file_path = get_excel_path(filename)
-        if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail="File not found")
-        
-        return FileResponse(
-            path=file_path,
-            filename=filename,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    except Exception as e:
-        logger.error(f"Error downloading file {filename}: {e}")
-        raise HTTPException(status_code=500, detail=f"Error downloading file: {str(e)}")
 
-# Add list files endpoint
-@mcp.app.get("/files")
-async def list_files():
-    """List all Excel files in the server."""
-    try:
-        if EXCEL_FILES_PATH is None:
-            raise HTTPException(status_code=500, detail="EXCEL_FILES_PATH not configured")
-        
-        files = []
-        if os.path.exists(EXCEL_FILES_PATH):
-            for file in os.listdir(EXCEL_FILES_PATH):
-                if file.endswith(('.xlsx', '.xls')):
-                    files.append(file)
-        
-        return {"files": files}
-    except Exception as e:
-        logger.error(f"Error listing files: {e}")
-        raise HTTPException(status_code=500, detail=f"Error listing files: {str(e)}")
 
 
 

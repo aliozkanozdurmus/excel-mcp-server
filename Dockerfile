@@ -34,6 +34,7 @@ ENV R2_ENDPOINT=https://92e19074b3ec088a0e755e5174e8dd55.r2.cloudflarestorage.co
 ENV R2_ACCESS_KEY=3505e08be24ef3793f265ad2440d3c54
 ENV R2_SECRET_KEY=6889050c545bece2cf082a62b8836195dd21a6b4ea7ff9bc91040fb7f37f63c4
 ENV R2_BUCKET=excelmcp
+ENV R2_CUSTOM_DOMAIN=https://server.excelmcp.veniai.com.tr
 
 
 # VSCode'da çalışan komutun aynısı

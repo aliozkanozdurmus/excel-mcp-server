@@ -128,6 +128,7 @@ def upload_to_r2(file_path: str, filename: str) -> str:
         r2_access_key = os.environ.get("R2_ACCESS_KEY")
         r2_secret_key = os.environ.get("R2_SECRET_KEY")
         r2_bucket = os.environ.get("R2_BUCKET")
+        custom_domain = os.environ.get("R2_CUSTOM_DOMAIN", "https://server.excelmcp.veniai.com.tr")
         
         if not all([r2_endpoint, r2_access_key, r2_secret_key, r2_bucket]):
             return "R2 credentials not configured"
@@ -149,8 +150,8 @@ def upload_to_r2(file_path: str, filename: str) -> str:
         # Upload file with folder structure
         s3_client.upload_file(file_path, r2_bucket, r2_path)
         
-        # Generate public URL with folder structure
-        public_url = f"{r2_endpoint}/{r2_bucket}/{r2_path}"
+        # Generate public URL with custom domain
+        public_url = f"{custom_domain}/{r2_path}"
         return public_url
         
     except ClientError as e:

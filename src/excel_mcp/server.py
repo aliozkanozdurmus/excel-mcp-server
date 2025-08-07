@@ -168,10 +168,7 @@ def apply_formula(
     cell: str,
     formula: str,
 ) -> str:
-    """
-    Apply Excel formula to cell.
-    Excel formula will write to cell with verification.
-    """
+    """Excel hücresine formül uygular. SUM, AVERAGE, COUNT gibi Excel formüllerini destekler."""
     try:
         full_path = get_excel_path(filepath)
         # First validate the formula
@@ -228,6 +225,7 @@ def format_range(
     protection: Optional[Dict[str, Any]] = None,
     conditional_format: Optional[Dict[str, Any]] = None
 ) -> str:
+    """Excel hücrelerini formatlar. Font, renk, hizalama, kenarlık gibi özellikleri ayarlar."""
     """Apply formatting to a range of cells."""
     try:
         full_path = get_excel_path(filepath)
@@ -269,6 +267,7 @@ def read_data_from_excel(
     end_cell: Optional[str] = None,
     preview_only: bool = False
 ) -> str:
+    """Excel dosyasından veri okur. Belirtilen hücre aralığındaki tüm verileri döndürür."""
     """
     Read data from Excel worksheet with cell metadata including validation rules.
     
@@ -310,6 +309,7 @@ def write_data_to_excel(
     data: List[List],
     start_cell: str = "A1",
 ) -> str:
+    """Excel dosyasına veri yazar. Veri listesi formatında olmalıdır (örn: [["Başlık"], ["Veri1"], ["Veri2"]])."""
     """
     Write data to Excel worksheet.
     Excel formula will write to cell without any verification.
@@ -322,6 +322,13 @@ def write_data_to_excel(
   
     """
     try:
+        # Veri boyutu sınırı kontrolü
+        if len(data) > 10000:  # Maksimum 10,000 satır
+            return "Hata: Çok fazla veri. Maksimum 10,000 satır yazılabilir."
+        
+        if len(data) > 0 and len(data[0]) > 100:  # Maksimum 100 sütun
+            return "Hata: Çok fazla sütun. Maksimum 100 sütun yazılabilir."
+        
         full_path = get_excel_path(filepath)
         result = write_data(full_path, sheet_name, data, start_cell)
         return result["message"]
@@ -333,8 +340,12 @@ def write_data_to_excel(
 
 @mcp.tool()
 def create_workbook(filepath: str, sheet_name: str = "Veri") -> str:
-    """Create new Excel workbook and upload to R2 storage."""
+    """Yeni bir Excel dosyası oluşturur ve Cloudflare'e yükler. Dosya otomatik olarak indirilebilir link ile birlikte döndürülür."""
     try:
+        # Dosya boyutu sınırı kontrolü
+        if len(filepath) > 100:
+            return "Hata: Dosya adı çok uzun. Maksimum 100 karakter olmalı."
+        
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_workbook as create_workbook_impl
         create_workbook_impl(full_path)
@@ -364,7 +375,7 @@ def create_workbook(filepath: str, sheet_name: str = "Veri") -> str:
 
 @mcp.tool()
 def upload_excel_to_cloudflare(filepath: str) -> str:
-    """Upload existing Excel file to Cloudflare storage for download."""
+    """Mevcut Excel dosyasını Cloudflare'e yükler ve indirilebilir link oluşturur."""
     try:
         full_path = get_excel_path(filepath)
         
@@ -386,8 +397,12 @@ def upload_excel_to_cloudflare(filepath: str) -> str:
 
 @mcp.tool()
 def create_worksheet(filepath: str, sheet_name: str) -> str:
-    """Create new worksheet in workbook."""
+    """Excel dosyasında yeni bir sayfa (worksheet) oluşturur."""
     try:
+        # Sayfa adı sınırı kontrolü
+        if len(sheet_name) > 50:
+            return "Hata: Sayfa adı çok uzun. Maksimum 50 karakter olmalı."
+        
         full_path = get_excel_path(filepath)
         from excel_mcp.workbook import create_sheet as create_worksheet_impl
         result = create_worksheet_impl(full_path, sheet_name)
@@ -409,7 +424,29 @@ def create_chart(
     x_axis: str = "",
     y_axis: str = ""
 ) -> str:
-    """Create chart in worksheet."""
+    """Excel'de grafik oluşturur. Çizgi, sütun, pasta, dağılım grafikleri desteklenir."""
+    try:
+        # Grafik başlığı sınırı kontrolü
+        if len(title) > 100:
+            return "Hata: Grafik başlığı çok uzun. Maksimum 100 karakter olmalı."
+        
+        full_path = get_excel_path(filepath)
+        result = create_chart_impl(
+            filepath=full_path,
+            sheet_name=sheet_name,
+            data_range=data_range,
+            chart_type=chart_type,
+            target_cell=target_cell,
+            title=title,
+            x_axis=x_axis,
+            y_axis=y_axis
+        )
+        return result["message"]
+    except (ValidationError, ChartError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error creating chart: {e}")
+        raise
     try:
         full_path = get_excel_path(filepath)
         result = create_chart_impl(
@@ -439,6 +476,7 @@ def create_pivot_table(
     columns: Optional[List[str]] = None,
     agg_func: str = "mean"
 ) -> str:
+    """Excel'de pivot tablo oluşturur. Verileri satır, sütun ve değer olarak gruplar."""
     """Create pivot table in worksheet."""
     try:
         full_path = get_excel_path(filepath)
@@ -711,6 +749,20 @@ def insert_rows(
     start_row: int,
     count: int = 1
 ) -> str:
+    """Excel'de satır ekler."""
+    try:
+        # Satır sayısı sınırı kontrolü
+        if count > 1000:
+            return "Hata: Çok fazla satır eklenmeye çalışılıyor. Maksimum 1,000 satır eklenebilir."
+        
+        full_path = get_excel_path(filepath)
+        result = insert_row(full_path, sheet_name, start_row, count)
+        return result["message"]
+    except (ValidationError, SheetError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error inserting rows: {e}")
+        raise
     """Insert one or more rows starting at the specified row."""
     try:
         full_path = get_excel_path(filepath)
@@ -729,6 +781,20 @@ def insert_columns(
     start_col: int,
     count: int = 1
 ) -> str:
+    """Excel'de sütun ekler."""
+    try:
+        # Sütun sayısı sınırı kontrolü
+        if count > 100:
+            return "Hata: Çok fazla sütun eklenmeye çalışılıyor. Maksimum 100 sütun eklenebilir."
+        
+        full_path = get_excel_path(filepath)
+        result = insert_cols(full_path, sheet_name, start_col, count)
+        return result["message"]
+    except (ValidationError, SheetError) as e:
+        return f"Error: {str(e)}"
+    except Exception as e:
+        logger.error(f"Error inserting columns: {e}")
+        raise
     """Insert one or more columns starting at the specified column."""
     try:
         full_path = get_excel_path(filepath)
@@ -747,8 +813,12 @@ def delete_sheet_rows(
     start_row: int,
     count: int = 1
 ) -> str:
-    """Delete one or more rows starting at the specified row."""
+    """Excel'den satır siler."""
     try:
+        # Silme sayısı sınırı kontrolü
+        if count > 1000:
+            return "Hata: Çok fazla satır silinmeye çalışılıyor. Maksimum 1,000 satır silinebilir."
+        
         full_path = get_excel_path(filepath)
         result = delete_rows(full_path, sheet_name, start_row, count)
         return result["message"]
@@ -765,8 +835,12 @@ def delete_sheet_columns(
     start_col: int,
     count: int = 1
 ) -> str:
-    """Delete one or more columns starting at the specified column."""
+    """Excel'den sütun siler."""
     try:
+        # Silme sayısı sınırı kontrolü
+        if count > 100:
+            return "Hata: Çok fazla sütun silinmeye çalışılıyor. Maksimum 100 sütun silinebilir."
+        
         full_path = get_excel_path(filepath)
         result = delete_cols(full_path, sheet_name, start_col, count)
         return result["message"]
@@ -805,6 +879,7 @@ def run_streamable_http():
     
     try:
         logger.info(f"Starting Excel MCP server with streamable HTTP transport (files directory: {EXCEL_FILES_PATH})")
+        logger.info("⚠️  Sınırlar: Maksimum 10,000 satır, 100 sütun, 1,000 satır/sütun ekleme")
         mcp.run(transport="streamable-http")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")

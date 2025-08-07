@@ -2,9 +2,8 @@
 builder = "railpack"
 
 [deploy]
-startCommand = "uv run excel-mcp-server streamable-http"
-healthcheckPath = "/mcp"
-healthcheckTimeout = 300
+start = "uv run excel-mcp-server streamable-http"
+healthcheck = "/mcp"
 
 [env]
 EXCEL_FILES_PATH = "/app/excel_files"

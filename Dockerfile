@@ -27,6 +27,9 @@ ENV FASTMCP_HOST=0.0.0.0
 # Dependencies'leri kur
 RUN uv sync
 
+# WebSocket library'si ekle
+RUN pip install websockets
+
 # Port'u expose et
 EXPOSE 8000
 
